@@ -21,7 +21,7 @@ public class RecipeAnalysisImpl {
         String key4 = T.RECIPE2 + T.DEFOOD4 + T.CYCLE;
         String key5 = T.RECIPE2 + T.DEFOOD5 + T.CYCLE;
         String key6 = T.SPECRECIPE + T.SPECDEFOOD + T.CYCLE;
-        final FoodItem f01 = M(T.MATERIAL1,  T.CATE1, 50, T.FSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key1);
+        final FoodItem f01 = M(T.MATERIAL1,  T.CATE1, 70, T.FSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key1);
         final FoodItem f02 = M(T.MATERIAL2,  T.CATE5, 60, T.FSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.FALSE, key1);
         final FoodItem f03 = M(T.MATERIAL3,  T.CATE5, 50, T.FSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.FALSE, key1);
         final FoodItem f04 = M(T.MATERIAL4,  T.CATE6, 70, T.BSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.FALSE, key2);
@@ -59,7 +59,7 @@ public class RecipeAnalysisImpl {
             add(f13);
             add(f14);
         }});
-        ret.put(key6, L(50));
+        ret.put(key6, L(10));
         return ret;
     }
 

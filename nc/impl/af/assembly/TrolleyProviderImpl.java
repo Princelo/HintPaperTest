@@ -31,6 +31,7 @@ public class TrolleyProviderImpl implements Serializable {
         List<TrolleyItem> t7 = T7();
         List<TrolleyItem> t8 = T8();
         List<TrolleyItem> t9 = T9();
+        t1.addAll(T15());
         t1.addAll(t2);
         t1.addAll(t3);
         t1.addAll(t4);
@@ -398,6 +399,46 @@ public class TrolleyProviderImpl implements Serializable {
         return ret;
     }
 
+    private List<TrolleyItem> T15() {
+        List<TrolleyItem> ret = new ArrayList<>();
+        for (int i = 1; i <= 28; i++) {
+            TrolleyItem item = new TrolleyItem();
+            item.setRecipe(T.RECIPE1);
+            item.setSrcAssemblyB("" + i);
+            item.setSpace(T.FSPACE);
+            item.setPlanServer("PLANSERVER");
+            item.setPlanSeat("PLANSEAT");
+            item.setKitchen("KITCHEN");
+            item.setInstalledMap(new HashMap<String, UFDouble>());
+            item.setDeviceID("deviceid000000000015");
+            item.setDeviceType("JK1CZ001");
+            item.setDeviceNbr("devicenbr015");
+            item.setStartIndex(i);
+            item.setEndIndex(i);
+            item.sethPart(i <= 14 ? "1" : "2");
+            item.setvPart("1");
+            item.setWide(false);
+            item.setLongDefoodKey(new LinkedHashSet<String>());
+            item.setShortDefoodKey(new LinkedHashSet<String>());
+            item.setSpecialPriority(true);
+            item.setInstalledIDs(new LinkedHashSet<String>());
+            item.setvCellNumber(1);
+            item.settCellNumber(1);
+            item.setFree(false);
+            item.setNote("");
+            item.setSpecicalInstalled(false);
+            item.setForHot(true);
+            item.setCategories(new HashSet<String>() {{add(T.DEFOOD1 + T.CATE1);}});
+            OptionCateSet optionCateSet = new OptionCateSet(item.getCategories(),
+                    new HashSet<UFDouble>() {{add(new UFDouble(2));}},
+                    new HashMap<String, UFDouble>() {{put(T.DEFOOD1 + T.CATE1, new UFDouble(2));}});
+            item.setCateCapMap(optionCateSet.getCateCapMap());
+            item.setOrigCateCapMap(optionCateSet.getCateCapMap());
+            ret.add(item);
+        }
+        return ret;
+    }
+
     private List<TrolleyItem> T1() {
         List<TrolleyItem> ret = new ArrayList<>();
         for (int i = 1; i <= 28; i++) {
@@ -419,7 +460,7 @@ public class TrolleyProviderImpl implements Serializable {
             item.setWide(false);
             item.setLongDefoodKey(new LinkedHashSet<String>());
             item.setShortDefoodKey(new LinkedHashSet<String>());
-            item.setSpecialPriority(true);
+            item.setSpecialPriority(false);
             item.setInstalledIDs(new LinkedHashSet<String>());
             item.setvCellNumber(1);
             item.settCellNumber(1);

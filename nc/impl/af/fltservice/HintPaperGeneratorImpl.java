@@ -531,9 +531,9 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                 }
             }
         }
-        if (hasSpecialFoodItems(foodItems, space, deviceType)) {
-            return assemblyEmpty(repos, foodItems, true, space, deviceType);
-        }
+//        if (hasSpecialFoodItems(foodItems, space, deviceType)) {
+//            return assemblyEmpty(repos, foodItems, true, space, deviceType);
+//        }
         return repos;
     }
 
@@ -581,19 +581,27 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
         int specialItemsHas = calculateSpecItemHas(repos, space, deviceType);
         int need = 0;
         if ((need = (specialItemsHas - specialItemsNeed)) >= 0) {
-            markSpecial(repos, specialItemsNeed);
-            return repos;
-        }
-        for (int i = repos.size() - 1; i >= repos.size() - need; i ++) {
-            repos.get(i).setSpecial(true);
+            markSpecial(repos, specialItemsNeed, space, deviceType);
+        } else {
+            for (TrolleyItem reposItem : repos) {
+                if (reposItem.isSpecialPriority() && getDeviceType(reposItem).equals(deviceType)
+                        && reposItem.getSpace().equals(space) && specialItemsNeed-- > 0) {
+                    reposItem.setSpecial(true);
+                } else if (specialItemsNeed <= 0){
+                    break; /*performance*/
+                }
+            }
         }
         return repos;
     }
 
-    private void markSpecial(List<TrolleyItem> repos, int need) {
+    private void markSpecial(List<TrolleyItem> repos, int need, String space, String deviceType) {
         for (TrolleyItem reposItem : repos) {
-            if (reposItem.isSpecialPriority() && need-- > 0) {
+            if (reposItem.isSpecialPriority() && need-- > 0 && getDeviceType(reposItem).equals(deviceType)
+                    && reposItem.getSpace().equals(space)) {
                 reposItem.setSpecial(true);
+            } else if (need <= 0) {
+                break; /*performance*/
             }
         }
     }
@@ -607,11 +615,6 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
             }
         }
         return ret;
-    }
-
-    private List<TrolleyItem> dealOverload(List<TrolleyItem> repos) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     private List<TrolleyItem> markSpecial(List<TrolleyItem> repos, String space, String deviceType) {
@@ -663,7 +666,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
         for (TrolleyItem reposItem : repos) { // 餐车单元
             boolean match = false;
             indexOfRepos ++;
-            if (!reposItem.isFree() && reposItem.getSpace().equals(space) && getDeviceType(reposItem).equals(deviceType)
+            if (/*!reposItem.isFree() && */reposItem.getSpace().equals(space) && getDeviceType(reposItem).equals(deviceType)
                     && !reposItem.isVirtual() && !reposItem.isSpecicalInstalled()) {
                 Set<String> itemKeySet = foodItems.keySet();
                 Collection<List<FoodItem>> itemValues = foodItems.values();
@@ -677,48 +680,59 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                                 //reposItem walked
                                 String longDefood = foodItem.getLongDefoodKey();
                                 boolean isMatchMulti = isMatchMulti(reposItem, foodItem);
-                                boolean isMatch = isMatch(reposItem, foodItem);
+                                boolean isMatch = (reposItem.isFree()
+                                        && foodItem.getRemain().compareTo(UFDouble.ZERO_DBL) > 0
+                                        && deviceType.equals(foodItem.getBishot().booleanValue() ? "true" : "false")
+                                        && foodItem.getPkSpace().equals(space))
+                                        || isMatch(reposItem, foodItem);
                                 boolean hasSameDefood = hasSameDefood(repos, indexOfRepos, longDefood);
                                 boolean isNewTrolley = isNewTrolley(repos, indexOfRepos);
                                 if (step == 1 && isMatchMulti && hasSameDefood) {
-                                    installed = install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
+                                    installed = installed || install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
                                 } else if (step == 2 && isMatch && hasSameDefood) {
-                                    installed = install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
+                                    installed = installed || install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
                                 } else if (step == 3 && isMatchMulti && isNewTrolley) {
-                                    installed = install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
+                                    installed = installed || install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
                                 } else if (step == 4 && isMatch && isNewTrolley) {
-                                    installed = install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
+                                    installed = installed || install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
                                 } else if (step == 5 && isMatchMulti) {
-                                    installed = install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
+                                    installed = installed || install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
                                 } else if (step == 6 && isMatch) {
-                                    installed = install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
+                                    installed = installed || install(repos, indexOfRepos, foodItem, extraMap, extraRepos);
                                 }
                             }
                         }
                     }
                 }
-                for (List<FoodItem> items  : itemValues) {
-                    for (FoodItem foodItem : items) {
-                        if (isMatch(reposItem, foodItem) && !reposItem.isFree()) {
-                            match = true;
+                if (!installed /*performance*/) {
+                    for (List<FoodItem> items  : itemValues) {
+                        if (!match /*performance*/) {
+                            for (FoodItem foodItem : items) {
+                                if (isMatch(reposItem, foodItem) && !reposItem.isFree()) {
+                                    match = true;
+                                    break; /*performance*/
+                                }
+                            }
                         }
+                    }
+                    //注意 installPortion
+                    //所有餐食不滿足此餐车单元
+                    //标记此单元为自由 可安装挪餐餐食
+                    if (reposItem.getInstalledIDs().isEmpty() && !match && !reposItem.isFree()
+//                            && !reposItem.isFree()
+//                            && getDeviceType(reposItem).equals(deviceType)
+//                            && reposItem.getSpace().equals(space)) {
+                            ) {
+                        //TODO
+                        //马上挪餐
+                        reposItem.setFree(true);
+                        hasBreak = true;
+                        break;
                     }
                 }
             }
-            //所有餐食不滿足此餐车单元
-            //标记此单元为自由 可安装挪餐餐食
-            if (reposItem.getInstalledIDs().isEmpty() && !match
-                    && !reposItem.isFree()
-                    && getDeviceType(reposItem).equals(deviceType)
-                    && reposItem.getSpace().equals(space)) {
-                //TODO
-                //马上挪餐
-                reposItem.setFree(true);
-                hasBreak = true;
-                break;
-            }
         }
-        repos = shift(repos, space, deviceType);
+        repos = shift(repos, space, deviceType, indexOfRepos);
         //TODO
         if (/**直到行完一次，像沒有break出來一樣**/hasBreak) {
             return assemblyNormal(repos, foodItems, extraMap, space, deviceType);
@@ -1068,25 +1082,25 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
         }
         return -1;
     }
-    private List<TrolleyItem> shift(List<TrolleyItem> repos, String space, String deviceType) {
+    private List<TrolleyItem> shift(List<TrolleyItem> repos, String space, String deviceType, int startIndex) {
         List<TrolleyItem> ret = (List<TrolleyItem>)AFUtil.clone((ArrayList<TrolleyItem>)repos);
-        for (int i = 0; i < repos.size() - 1; i++) {
+        for (int i = startIndex; i < repos.size() - 1; i++) {
             if (repos.get(i).isFree() && repos.get(i).getSpace().equals(space)
                     && getDeviceType(repos.get(i)).equals(deviceType)) {
                 MutableInt j = new MutableInt(i);
                 TrolleyItem currItem = ret.get(i);
                 boolean isVirtual = currItem.isVirtual();
-                TrolleyItem nextItem = getNextNotFreeItem(ret, j, deviceType);
+                TrolleyItem nextItem = getNextNotFreeItem(ret, j, space, deviceType);
                 if (null == nextItem) {
                     return ret;
                 }
-                if (!isVirtual)
-                    nextItem.setVirtual(isVirtual);
+//                if (!isVirtual)
+//                    nextItem.setVirtual(isVirtual);
                 int tCellNbr = currItem.gettCellNumber();
                 int nexttCellNbr = nextItem.gettCellNumber();
                 if (currItem.getDeviceID().equals(nextItem.getDeviceID())) {
                     ret = swapReposItem(ret, i, j.intValue());
-                    return shift(ret, space, deviceType);
+                    return shift(ret, space, deviceType, j.intValue());
                 } else if (currItem.getSpace().equals(nextItem.getSpace())
                         && getDeviceType(currItem).equals(nextItem.getDeviceType())) {
                     if (tCellNbr == nexttCellNbr) {
@@ -1100,8 +1114,12 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                         currItem.setNote(note);
                         currItem.setSrcAssemblyB(srcAssemblyB);
                         nextItem.setFree(true);
-                        return shift(ret, space, deviceType);
-                    } else if (tCellNbr < nexttCellNbr) {
+                        if (nextItem.isVirtual() && !currItem.isVirtual()) {
+                            nextItem.setVirtual(false);
+                            currItem.setVirtual(true);
+                        }
+                        return shift(ret, space, deviceType, j.intValue());
+                    } else if (tCellNbr < nexttCellNbr /* 统一使用一单元格 条件暂时作废 */) {
                         currItem.setFree(false);
                         Map<String, UFDouble> cateCapMap = nextItem.getCateCapMap();
                         Map<String, UFDouble> adCateCapMap = calculateCateCap(cateCapMap, tCellNbr, nexttCellNbr);
@@ -1120,7 +1138,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                         extraReposItem.setFree(true);
                         extraReposItem.settCellNumber(tCellNbr);
                         ret.add(j.intValue() + 1, extraReposItem);
-                        return shift(ret, space, deviceType);
+                        return shift(ret, space, deviceType, j.intValue());
                     } else {
                         currItem.setFree(false);
                         Map<String, UFDouble> cateCapMap = nextItem.getCateCapMap();
@@ -1137,7 +1155,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                         extraReposItem.settCellNumber(tCellNbr - nexttCellNbr);
                         extraReposItem.setFree(true);
                         ret.add(j.intValue() + 1, extraReposItem);
-                        return shift(ret, space, deviceType);
+                        return shift(ret, space, deviceType, j.intValue());
                     }
                 }
             }
@@ -1177,14 +1195,15 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
         return ret;
     }
 
-    private TrolleyItem getNextNotFreeItem(List<TrolleyItem> repos, MutableInt i, String deviceType) {
+    private TrolleyItem getNextNotFreeItem(List<TrolleyItem> repos, MutableInt i, String space, String deviceType) {
         if (i.intValue() < repos.size() - 1) {
             i.add(1);
             if (!repos.get(i.intValue()).isFree() && !repos.get(i.intValue()).isSpecial() /** 特殊餐不挪 **/
-                && getDeviceType(repos.get(i.intValue())).equals(deviceType)) {
+                && getDeviceType(repos.get(i.intValue())).equals(deviceType)
+                    && repos.get(i.intValue()).getSpace().equals(space)) {
                 return repos.get(i.intValue());
             } else {
-                return getNextNotFreeItem(repos, i, deviceType);
+                return getNextNotFreeItem(repos, i, space, deviceType);
             }
         }
         return null;
@@ -1192,6 +1211,10 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
 
     private List<TrolleyItem> swapReposItem(List<TrolleyItem> repos, int i, int j) {
         List<TrolleyItem> ret = (List<TrolleyItem>)AFUtil.clone((ArrayList<TrolleyItem>)repos);
+        if (repos.get(j).isVirtual() && !repos.get(i).isVirtual()) {
+            repos.get(j).setVirtual(true);
+            repos.get(i).setVirtual(false);
+        }
         ret.set(i, repos.get(j));
         ret.set(j, repos.get(i));
         return ret;
@@ -1471,6 +1494,12 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
         if (!reposSpace.equals(pkSpace)) {
             return false;
         }
+        if (!getDeviceType(reposItem).equals(foodItem.getBishot().booleanValue() ? "true" : "false")) {
+            return false;
+        }
+        if (foodItem.getRemain().compareTo(UFDouble.ZERO_DBL) <= 0) {
+            return false;
+        }
 //        if (!reposItem.isFree()) {
             if (!reposItem.getCategories().contains(category)) {
                 return false;
@@ -1487,13 +1516,13 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
         UFDouble quantity = foodItem.getRemain();
         String category = foodItem.getCategory();
         UFDouble capacity = reposItem.getRemainCapacity(category);
+        if (capacity.compareTo(UFDouble.ZERO_DBL) == 0) {
+            capacity = queryCapacity(category);
+        }
 
 //		installedResults.add(foodItem);
 
         if (capacity.compareTo(quantity) >= 0/*|| capacity.compareTo(UFDouble.ZERO_DBL) == 0*/) {
-            if (foodItem.getBisspecial().booleanValue()) {
-                reposItem.setSpecicalInstalled(true);
-            }
             AFLogger.info("trolley " + reposItem.getDeviceNbr() + " " + reposItem.getStartIndex() +
                     (reposItem.gethPart().equals("1")?" A ":" B ") +
                     " installed " + BaseDocUtil.getMaterialVO(foodItem.getPkMaterial()).getName() +
@@ -1502,7 +1531,8 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
             return reposItem.install(category, foodItem);
         } else {
 //			UFDouble installQuantity = quantity.sub(capacity);
-            UFDouble installQuantity = capacity;
+            capacity = queryCapacity(category);
+            UFDouble installQuantity = capacity.compareTo(quantity) >= 0 ? quantity : capacity;
             //extra
             String longDefoodKey = foodItem.getLongDefoodKey();
             List<FoodItem> extraList = extraMap.get(longDefoodKey) == null ?
@@ -1515,9 +1545,6 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
             extraList.add(extraItem);
             extraMap.put(longDefoodKey, extraList);
 
-            if (foodItem.getBisspecial().booleanValue()) {
-                reposItem.setSpecicalInstalled(true);
-            }
             AFLogger.info("trolley " + reposItem.getDeviceNbr() + " " + reposItem.getStartIndex() +
                     (reposItem.gethPart().equals("1")?" A ":" B ") +
                     " installed " + BaseDocUtil.getMaterialVO(foodItem.getPkMaterial()).getName() +
@@ -1525,6 +1552,15 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
             installedResults.add(foodItem);
             return reposItem.install(category, foodItem, installQuantity);
         }
+    }
+
+    private UFDouble queryCapacity(String category) {
+        for (TrolleyItem item : origRepos) {
+            if (item.getCategories().contains(category)) {
+                return item.getCapacity(category);
+            }
+        }
+        return UFDouble.ONE_DBL; /*默认一份*/
     }
 
     private boolean hasSameDefood(List<TrolleyItem> repos, int index, String longDefood) {
