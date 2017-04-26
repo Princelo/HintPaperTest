@@ -1,17 +1,7 @@
 package nc.impl.af.fltservice;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 import nc.bs.dao.BaseDAO;
 import nc.impl.af.assembly.TrolleyProviderImpl;
@@ -59,10 +49,10 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
     }
 
     private List<FoodItem> installedResults = null;
-    List<TrolleyItem> origRepos = new ArrayList<TrolleyItem>();
-    List<TrolleyItem> extraReposList;
-    Set<String> spaces;
-    Map<String, AggTrolleyHintPaperHVO> deviceIDPaperMap;
+    private List<TrolleyItem> origRepos = new ArrayList<TrolleyItem>();
+    private List<TrolleyItem> extraReposList;
+    private Set<String> spaces;
+    private Map<String, AggTrolleyHintPaperHVO> deviceIDPaperMap;
     private List<FoodItem> extraItems;
     private Map<String, String> legMap;
     private String airplaneNbr;
@@ -144,20 +134,36 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
             origRepos = (List<TrolleyItem>) AFUtil.clone((ArrayList<TrolleyItem>)repos);
             devices = provider.analyseRepos(repos);
             Set<String> spaceList = devices.keySet();
+            Set<String> spaceTypeList = new HashSet<String>();
             for (TrolleyItem reposItem : origRepos) {
                 spaces.add(reposItem.getSpace());
             }
 //			repos = assemblyForSpecial(repos, map);
             for (String space : spaceList) {
                 for (String deviceType : devices.get(space).keySet()) {
+                    spaceTypeList.add(space + deviceType);
                     repos = assembly(repos, map, space, deviceType);
                 }
             }
             assemblyFreeForSpecial(repos, map, devices);
+            assemblyNormalEmptyForOther(map, spaceTypeList);
             assemblyEmptyForSpecial(repos, map);
             return generatePapers(repos, installedResults, aggVO);
         }
         return null;
+    }
+
+    private void assemblyNormalEmptyForOther(Map<String, List<FoodItem>> map, Set<String> spaceTypeList) {
+        Collection<List<FoodItem>> itemValues = map.values();
+        for (List<FoodItem> items  : itemValues) {
+            for (FoodItem foodItem : items) {
+                if (!spaceTypeList.contains(foodItem.getPkSpace()
+                        + (foodItem.getBishot().booleanValue() ? "true" : "false"))
+                        && !foodItem.getBisspecial().booleanValue()) {
+                    extraItems.add(foodItem);
+                }
+            }
+        }
     }
 
     private void assemblyFreeForSpecial(List<TrolleyItem> repos, Map<String, List<FoodItem>> map,
@@ -323,7 +329,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
             String pkDefood = vo.getPk_defood();
             String pkMaterial = vo.getPk_material();
             boolean isExists = false;
-            if (null != oVOs && oVOs.length > 0)
+            if (oVOs.length > 0)
                 for (TrolleyHintPaperBVO oVO : oVOs) {
                     if (oVO.getPk_defood().equals(pkDefood) && oVO.getPk_material().equals(pkMaterial)) {
                         isExists = true;
@@ -333,9 +339,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                     }
                 }
             if (!isExists) {
-                List<TrolleyHintPaperBVO> oVOsList = new ArrayList<TrolleyHintPaperBVO>();
-                if (null != oVOs)
-                    oVOsList = new ArrayList<TrolleyHintPaperBVO>(Arrays.asList(oVOs));
+                List<TrolleyHintPaperBVO> oVOsList = new ArrayList<TrolleyHintPaperBVO>(Arrays.asList(oVOs));
                 oVOsList.add(vo);
                 oVOs = oVOsList.toArray(new TrolleyHintPaperBVO[oVOsList.size()]);
             }
@@ -417,6 +421,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                                 + reposItem.getStartIndex()
                                 + (reposItem.gethPart().equals("1") ? " A "
                                 : " B ") + " installed "
+                                + reposItem.isFree()
                                 + foodItem.getCategory()
                                 + foodItem.getPkMaterial() + " "
                                 + foodItem.getRemain());
@@ -439,6 +444,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                                 + reposItem.getStartIndex()
                                 + (reposItem.gethPart().equals("1") ? " A "
                                 : " B ") + " installed "
+                                + reposItem.isFree()
                                 + foodItem.getCategory()
                                 + foodItem.getPkMaterial() + " "
                                 + foodItem.getRemain());
@@ -500,6 +506,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                                     + reposItem.getStartIndex()
                                     + (reposItem.gethPart().equals("1") ? " A "
                                     : " B ") + " installed "
+                                    + reposItem.isFree()
                                     + foodItem.getCategory()
                                     + foodItem.getPkMaterial() + " "
                                     + foodItem.getRemain());
@@ -521,6 +528,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                                     + reposItem.getStartIndex()
                                     + (reposItem.gethPart().equals("1") ? " A "
                                     : " B ") + " installed "
+                                    + reposItem.isFree()
                                     + foodItem.getCategory()
                                     + foodItem.getPkMaterial() + " "
                                     + foodItem.getRemain());
@@ -657,9 +665,6 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
     private List<TrolleyItem> assemblyNormal(List<TrolleyItem> repos, Map<String, List<FoodItem>> foodItems,
                                              Map<String, List<FoodItem>> extraMap, String space, String deviceType)
             throws BusinessException {
-        // TODO Auto-generated method stub
-        //return repos
-        //挪餐切割后的餐车单元
         List<TrolleyItem> extraRepos = new ArrayList<TrolleyItem>();
         int indexOfRepos = -1;
         boolean hasBreak = false;
@@ -667,7 +672,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
             boolean match = false;
             indexOfRepos ++;
             if (/*!reposItem.isFree() && */reposItem.getSpace().equals(space) && getDeviceType(reposItem).equals(deviceType)
-                    && !reposItem.isVirtual() && !reposItem.isSpecicalInstalled()) {
+                    && !reposItem.isVirtual() && !reposItem.isSpecicalInstalled() && !reposItem.isSpecial()) {
                 Set<String> itemKeySet = foodItems.keySet();
                 Collection<List<FoodItem>> itemValues = foodItems.values();
                 Iterator<String> it = itemKeySet.iterator();
@@ -732,9 +737,9 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                 }
             }
         }
-        repos = shift(repos, space, deviceType, indexOfRepos);
         //TODO
         if (/**直到行完一次，像沒有break出來一樣**/hasBreak) {
+            repos = shift(repos, space, deviceType, indexOfRepos);
             return assemblyNormal(repos, foodItems, extraMap, space, deviceType);
         }/**然後未裝的餐食都在extraMap裡**/
 
@@ -845,6 +850,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
         String category = foodItem.getCategory();
         AFLogger.info("trolley " + reposItem.getDeviceNbr() + " " + reposItem.getStartIndex()
                 + (reposItem.gethPart().equals("1") ? " A " : " B ")
+                + reposItem.isFree()
                 + " installed " + foodItem.getCategory() + foodItem.getPkMaterial() +
                 " " + foodItem.getRemain());
         installedResults.add(foodItem);
@@ -1114,10 +1120,6 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
                         currItem.setNote(note);
                         currItem.setSrcAssemblyB(srcAssemblyB);
                         nextItem.setFree(true);
-                        if (nextItem.isVirtual() && !currItem.isVirtual()) {
-                            nextItem.setVirtual(false);
-                            currItem.setVirtual(true);
-                        }
                         return shift(ret, space, deviceType, j.intValue());
                     } else if (tCellNbr < nexttCellNbr /* 统一使用一单元格 条件暂时作废 */) {
                         currItem.setFree(false);
@@ -1212,8 +1214,8 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
     private List<TrolleyItem> swapReposItem(List<TrolleyItem> repos, int i, int j) {
         List<TrolleyItem> ret = (List<TrolleyItem>)AFUtil.clone((ArrayList<TrolleyItem>)repos);
         if (repos.get(j).isVirtual() && !repos.get(i).isVirtual()) {
-            repos.get(j).setVirtual(true);
-            repos.get(i).setVirtual(false);
+            repos.get(j).setVirtual(false);
+            repos.get(i).setVirtual(true);
         }
         ret.set(i, repos.get(j));
         ret.set(j, repos.get(i));
@@ -1516,7 +1518,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
         UFDouble quantity = foodItem.getRemain();
         String category = foodItem.getCategory();
         UFDouble capacity = reposItem.getRemainCapacity(category);
-        if (capacity.compareTo(UFDouble.ZERO_DBL) == 0) {
+        if (capacity.compareTo(UFDouble.ZERO_DBL) <= 0) {
             capacity = queryCapacity(category);
         }
 
@@ -1525,13 +1527,15 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
         if (capacity.compareTo(quantity) >= 0/*|| capacity.compareTo(UFDouble.ZERO_DBL) == 0*/) {
             AFLogger.info("trolley " + reposItem.getDeviceNbr() + " " + reposItem.getStartIndex() +
                     (reposItem.gethPart().equals("1")?" A ":" B ") +
+                    reposItem.isFree() +
                     " installed " + BaseDocUtil.getMaterialVO(foodItem.getPkMaterial()).getName() +
                     " " + quantity);
             installedResults.add(foodItem);
             return reposItem.install(category, foodItem);
         } else {
 //			UFDouble installQuantity = quantity.sub(capacity);
-            capacity = queryCapacity(category);
+            if (capacity.compareTo(UFDouble.ZERO_DBL) <= 0)
+                capacity = queryCapacity(category);
             UFDouble installQuantity = capacity.compareTo(quantity) >= 0 ? quantity : capacity;
             //extra
             String longDefoodKey = foodItem.getLongDefoodKey();
@@ -1547,6 +1551,7 @@ public class HintPaperGeneratorImpl implements IHintPaperGenerator {
 
             AFLogger.info("trolley " + reposItem.getDeviceNbr() + " " + reposItem.getStartIndex() +
                     (reposItem.gethPart().equals("1")?" A ":" B ") +
+                    reposItem.isFree() +
                     " installed " + BaseDocUtil.getMaterialVO(foodItem.getPkMaterial()).getName() +
                     " " + installQuantity);
             installedResults.add(foodItem);

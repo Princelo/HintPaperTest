@@ -279,7 +279,7 @@ public class TrolleyItem implements Serializable {
 	}
 
 	public String toString() {
-		return space + isFree + isVirtual;
+		return space.substring(0, 1) + isFree + isVirtual + deviceID.substring(17, 20);
 	}
 
 	public boolean installSpecial(FoodItem foodItem) {

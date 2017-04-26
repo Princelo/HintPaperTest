@@ -21,7 +21,7 @@ public class RecipeAnalysisImpl {
         String key4 = T.RECIPE2 + T.DEFOOD4 + T.CYCLE;
         String key5 = T.RECIPE2 + T.DEFOOD5 + T.CYCLE;
         String key6 = T.SPECRECIPE + T.SPECDEFOOD + T.CYCLE;
-        final FoodItem f01 = M(T.MATERIAL1,  T.CATE1, 70, T.FSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key1);
+        final FoodItem f01 = M(T.MATERIAL1,  T.CATE1, 120, T.FSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key1);
         final FoodItem f02 = M(T.MATERIAL2,  T.CATE5, 60, T.FSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.FALSE, key1);
         final FoodItem f03 = M(T.MATERIAL3,  T.CATE5, 50, T.FSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.FALSE, key1);
         final FoodItem f04 = M(T.MATERIAL4,  T.CATE6, 70, T.BSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.FALSE, key2);
@@ -35,10 +35,12 @@ public class RecipeAnalysisImpl {
         final FoodItem f12 = M(T.MATERIAL12, T.CATE4, 60, T.BSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.FALSE, key5);
         final FoodItem f13 = M(T.MATERIAL13, T.CATE2, 20, T.BSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key5);
         final FoodItem f14 = M(T.MATERIAL14, T.CATE2, 20, T.BSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key5);
+        final FoodItem f15 = M(T.MATERIAL1,  T.CATE2, 100, T.HESPACE,UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key1);
         ret.put(key1, new ArrayList<FoodItem>() {{
             add(f01);
             add(f02);
             add(f03);
+            add(f15);
         }});
         ret.put(key2, new ArrayList<FoodItem>() {{
             add(f04);
@@ -59,7 +61,7 @@ public class RecipeAnalysisImpl {
             add(f13);
             add(f14);
         }});
-        ret.put(key6, L(10));
+        ret.put(key6, L(30));
         return ret;
     }
 
