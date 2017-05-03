@@ -34,7 +34,7 @@ public class RecipeAnalysisImpl {
         final FoodItem f11 = M(T.MATERIAL11, T.CATE3, 30, T.FSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.FALSE, key4);
         final FoodItem f12 = M(T.MATERIAL12, T.CATE4, 60, T.BSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.FALSE, key5);
         final FoodItem f13 = M(T.MATERIAL13, T.CATE2, 20, T.BSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key5);
-        final FoodItem f14 = M(T.MATERIAL14, T.CATE2, 20, T.BSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key5);
+        final FoodItem f14 = M(T.MATERIAL14, T.CATE2, 20, T.DSPACE, UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key5);
         final FoodItem f15 = M(T.MATERIAL1,  T.CATE2, 100, T.HESPACE,UFBoolean.FALSE, UFBoolean.FALSE, UFBoolean.TRUE, key1);
         ret.put(key1, new ArrayList<FoodItem>() {{
             add(f01);

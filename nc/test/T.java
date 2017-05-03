@@ -37,5 +37,6 @@ public interface T {
  public static String FSPACE = "FSPACE00000000000001";
  public static String BSPACE = "BSPACE00000000000001";
  public static String ESPACE = "ESPACE00000000000001";
+ public static String DSPACE = "DSPACE00000000000001";
  public static String HESPACE = "HESPACE0000000000001";
 }

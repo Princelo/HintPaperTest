@@ -21,7 +21,7 @@ public class TrolleyProviderImpl implements Serializable {
         return null;
     }
 
-    public List<TrolleyItem> getRepos(String pkAirplane, String pkModel, boolean boolDomain, String pkFltno, UFDateTime validTime) throws BusinessException {
+    public List<TrolleyItem> getRepos(String pkAirplane, String pkModel, String pkFltno, UFDateTime validTime) throws BusinessException {
         List<TrolleyItem> t1 = T1();
         List<TrolleyItem> t2 = T2();
         List<TrolleyItem> t3 = T3();
